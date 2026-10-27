@@ -27,7 +27,14 @@ def after_install():
 
 
 def after_migrate():
-	frappe.clear_cache()
+	"""Nothing to migrate; keep it defensive so it can never abort a migrate."""
+	try:
+		frappe.clear_cache()
+	except Exception:
+		frappe.log_error(
+			title="Meta: after_migrate failed",
+			message=frappe.get_traceback(),
+		)
 
 
 # ---------------------------------------------------------------------------
