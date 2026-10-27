@@ -1,0 +1,163 @@
+{
+ "actions": [],
+ "autoname": "field:insight_key",
+ "creation": "2026-10-27 10:00:00.000000",
+ "description": "Daily spend per ad. Each row is booked at most once (expense_entry).",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "insight_key",
+  "meta_account",
+  "company",
+  "date",
+  "ad",
+  "ad_name",
+  "campaign",
+  "ad_set",
+  "column_break_main",
+  "spend",
+  "impressions",
+  "clicks",
+  "currency",
+  "expense_entry",
+  "last_synced_on"
+ ],
+ "fields": [
+  {
+   "fieldname": "insight_key",
+   "fieldtype": "Data",
+   "label": "Insight Key",
+   "read_only": 1,
+   "unique": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "meta_account",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Meta Account",
+   "options": "Meta Account",
+   "reqd": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "ad",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Ad",
+   "options": "Meta Ad"
+  },
+  {
+   "fieldname": "ad_name",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "Ad Name"
+  },
+  {
+   "fieldname": "campaign",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Campaign",
+   "options": "Meta Campaign"
+  },
+  {
+   "fieldname": "ad_set",
+   "fieldtype": "Link",
+   "label": "Ad Set",
+   "options": "Meta Ad Set"
+  },
+  {
+   "fieldname": "column_break_main",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "spend",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Spend"
+  },
+  {
+   "fieldname": "impressions",
+   "fieldtype": "Int",
+   "label": "Impressions"
+  },
+  {
+   "fieldname": "clicks",
+   "fieldtype": "Int",
+   "label": "Clicks"
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Data",
+   "label": "Currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "expense_entry",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Expense Entry",
+   "options": "Meta Expense Entry",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_synced_on",
+   "fieldtype": "Datetime",
+   "label": "Last Synced On",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-10-27 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Meta Integration",
+ "name": "Meta Insight",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "share": 1
+  }
+ ],
+ "search_fields": "ad_name,insight_key",
+ "sort_field": "date",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "ad_name",
+ "track_changes": 0
+}

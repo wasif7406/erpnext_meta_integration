@@ -1,0 +1,230 @@
+{
+ "actions": [],
+ "autoname": "format:MEA-{####}",
+ "creation": "2026-10-27 10:00:00.000000",
+ "description": "One Meta ad account (token, ad account id, mapping). A company usually has one; several are allowed, exactly one may be default.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "account_name",
+  "company",
+  "is_default",
+  "enabled",
+  "column_break_main",
+  "ad_account_id",
+  "merchant_name",
+  "api_version",
+  "access_token",
+  "app_id",
+  "app_secret",
+  "section_break_money",
+  "currency",
+  "exchange_rate",
+  "booking_mode",
+  "supplier",
+  "purchase_item",
+  "column_break_money",
+  "enable_sync",
+  "enable_auto_booking",
+  "sync_days",
+  "last_sync_on",
+  "last_run_result",
+  "section_break_mapping",
+  "mapping"
+ ],
+ "fields": [
+  {
+   "fieldname": "account_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Account Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_default",
+   "fieldtype": "Check",
+   "label": "Default for Company",
+   "description": "Required when a company has more than one enabled account."
+  },
+  {
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Enabled"
+  },
+  {
+   "fieldname": "column_break_main",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "e.g. act_1234567890 (or just the numeric id)",
+   "fieldname": "ad_account_id",
+   "fieldtype": "Data",
+   "label": "Ad Account ID",
+   "reqd": 1
+  },
+  {
+   "fieldname": "merchant_name",
+   "fieldtype": "Data",
+   "label": "Ad Account Name",
+   "read_only": 1
+  },
+  {
+   "default": "v25.0",
+   "fieldname": "api_version",
+   "fieldtype": "Data",
+   "label": "Marketing API Version"
+  },
+  {
+   "fieldname": "access_token",
+   "fieldtype": "Password",
+   "label": "Access Token"
+  },
+  {
+   "fieldname": "app_id",
+   "fieldtype": "Data",
+   "label": "App ID (informational)"
+  },
+  {
+   "fieldname": "app_secret",
+   "fieldtype": "Password",
+   "label": "App Secret (informational)"
+  },
+  {
+   "fieldname": "section_break_money",
+   "fieldtype": "Section Break",
+   "label": "Currency & Booking"
+  },
+  {
+   "description": "Filled by the sync from the ad account (spend is reported in this currency).",
+   "fieldname": "currency",
+   "fieldtype": "Data",
+   "label": "Ad Account Currency",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "description": "Ad account currency -> company currency. Required when they differ.",
+   "fieldname": "exchange_rate",
+   "fieldtype": "Float",
+   "label": "Exchange Rate"
+  },
+  {
+   "default": "Journal Entry",
+   "fieldname": "booking_mode",
+   "fieldtype": "Select",
+   "label": "Booking Mode",
+   "options": "Journal Entry\nPurchase Invoice"
+  },
+  {
+   "description": "Party on the payable line (Journal Entry) / supplier of the bill (Purchase Invoice).",
+   "fieldname": "supplier",
+   "fieldtype": "Link",
+   "label": "Supplier",
+   "options": "Supplier"
+  },
+  {
+   "depends_on": "eval:doc.booking_mode == 'Purchase Invoice'",
+   "description": "Service / non-stock item used as the bill line.",
+   "fieldname": "purchase_item",
+   "fieldtype": "Link",
+   "label": "Purchase Item",
+   "options": "Item"
+  },
+  {
+   "fieldname": "column_break_money",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_sync",
+   "fieldtype": "Check",
+   "label": "Enable Sync"
+  },
+  {
+   "default": "0",
+   "description": "Book the previous month automatically on the 1st. Off by default: booking is a manual decision.",
+   "fieldname": "enable_auto_booking",
+   "fieldtype": "Check",
+   "label": "Auto Book Previous Month"
+  },
+  {
+   "default": "7",
+   "description": "How many days back each sync re-reads (Meta restates spend for a few days).",
+   "fieldname": "sync_days",
+   "fieldtype": "Int",
+   "label": "Sync Window (days)"
+  },
+  {
+   "fieldname": "last_sync_on",
+   "fieldtype": "Datetime",
+   "label": "Last Sync On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_run_result",
+   "fieldtype": "Small Text",
+   "label": "Last Run Result",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_mapping",
+   "fieldtype": "Section Break",
+   "label": "Account Mapping"
+  },
+  {
+   "fieldname": "mapping",
+   "fieldtype": "Table",
+   "label": "Mapping",
+   "options": "Meta Account Mapping"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-10-27 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Meta Integration",
+ "name": "Meta Account",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "share": 1
+  }
+ ],
+ "search_fields": "account_name,company,ad_account_id",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "account_name",
+ "track_changes": 1
+}

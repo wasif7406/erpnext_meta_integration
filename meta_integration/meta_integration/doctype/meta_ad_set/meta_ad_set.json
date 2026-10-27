@@ -1,0 +1,169 @@
+{
+ "actions": [],
+ "autoname": "field:ad_set_id",
+ "creation": "2026-10-27 10:00:00.000000",
+ "description": "Cached Meta ad set. Tick 'Report to ERPNext' to book its spend.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "ad_set_id",
+  "ad_set_name",
+  "meta_account",
+  "company",
+  "campaign",
+  "status",
+  "optimization_goal",
+  "billing_event",
+  "column_break_main",
+  "report_to_erpnext",
+  "daily_budget",
+  "lifetime_budget",
+  "start_time",
+  "end_time",
+  "last_synced_on"
+ ],
+ "fields": [
+  {
+   "fieldname": "ad_set_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Ad Set ID",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "ad_set_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Ad Set Name"
+  },
+  {
+   "fieldname": "meta_account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Meta Account",
+   "options": "Meta Account",
+   "reqd": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1
+  },
+  {
+   "fieldname": "campaign",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Campaign",
+   "options": "Meta Campaign"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status"
+  },
+  {
+   "fieldname": "optimization_goal",
+   "fieldtype": "Data",
+   "label": "Optimization Goal"
+  },
+  {
+   "fieldname": "billing_event",
+   "fieldtype": "Data",
+   "label": "Billing Event"
+  },
+  {
+   "fieldname": "column_break_main",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "Book the spend of every ad in this ad set as expense + payable.",
+   "fieldname": "report_to_erpnext",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Report to ERPNext"
+  },
+  {
+   "fieldname": "daily_budget",
+   "fieldtype": "Currency",
+   "label": "Daily Budget"
+  },
+  {
+   "fieldname": "lifetime_budget",
+   "fieldtype": "Currency",
+   "label": "Lifetime Budget"
+  },
+  {
+   "fieldname": "start_time",
+   "fieldtype": "Datetime",
+   "label": "Start Time"
+  },
+  {
+   "fieldname": "end_time",
+   "fieldtype": "Datetime",
+   "label": "End Time"
+  },
+  {
+   "fieldname": "last_synced_on",
+   "fieldtype": "Datetime",
+   "label": "Last Synced On",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-10-27 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Meta Integration",
+ "name": "Meta Ad Set",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts User",
+   "write": 1
+  }
+ ],
+ "search_fields": "ad_set_id,ad_set_name",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "ad_set_name",
+ "track_changes": 0
+}

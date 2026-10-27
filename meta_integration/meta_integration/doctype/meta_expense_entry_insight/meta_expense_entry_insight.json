@@ -1,0 +1,59 @@
+{
+ "actions": [],
+ "creation": "2026-10-27 10:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": ["date", "ad_id", "ad_name", "campaign", "spend"],
+ "fields": [
+  {
+   "columns": 2,
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Date",
+   "reqd": 1
+  },
+  {
+   "columns": 3,
+   "fieldname": "ad_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Ad ID"
+  },
+  {
+   "columns": 3,
+   "fieldname": "ad_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Ad Name"
+  },
+  {
+   "columns": 2,
+   "fieldname": "campaign",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Campaign",
+   "options": "Meta Campaign"
+  },
+  {
+   "columns": 2,
+   "fieldname": "spend",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Spend"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-27 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Meta Integration",
+ "name": "Meta Expense Entry Insight",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -1,0 +1,16 @@
+[project]
+name = "meta_integration"
+authors = [{ name = "Aqreno Nova", email = "dev@aqrenonova.com" }]
+description = "Meta (Facebook/Instagram) Ads spend -> ERPNext expense and payables"
+readme = "README.md"
+requires-python = ">=3.10"
+dynamic = ["version"]
+dependencies = []
+
+[build-system]
+requires = ["flit_core >=3.4,<4"]
+build-backend = "flit_core.buildapi"
+
+[tool.bench.frappe-dependencies]
+frappe = ">=15.0.0,<17.0.0"
+erpnext = ">=15.0.0,<17.0.0"

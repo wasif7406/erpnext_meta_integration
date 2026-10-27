@@ -1,0 +1,163 @@
+{
+ "actions": [],
+ "autoname": "format:MSR-{YYYY}-{#####}",
+ "creation": "2026-10-27 10:00:00.000000",
+ "description": "One row per sync run per Meta account. Pruned after 180 days.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "meta_account",
+  "company",
+  "status",
+  "column_break_main",
+  "started_on",
+  "finished_on",
+  "section_break_counts",
+  "campaigns",
+  "ad_sets",
+  "ads",
+  "insights_new",
+  "column_break_counts",
+  "insights_updated",
+  "insights_skipped",
+  "errors",
+  "section_break_summary",
+  "summary"
+ ],
+ "fields": [
+  {
+   "fieldname": "meta_account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Meta Account",
+   "options": "Meta Account",
+   "reqd": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "\nRunning\nSuccess\nPartial\nFailed\nSkipped",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_main",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "started_on",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Started On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "finished_on",
+   "fieldtype": "Datetime",
+   "label": "Finished On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_counts",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "campaigns",
+   "fieldtype": "Int",
+   "label": "Campaigns",
+   "read_only": 1
+  },
+  {
+   "fieldname": "ad_sets",
+   "fieldtype": "Int",
+   "label": "Ad Sets",
+   "read_only": 1
+  },
+  {
+   "fieldname": "ads",
+   "fieldtype": "Int",
+   "label": "Ads",
+   "read_only": 1
+  },
+  {
+   "fieldname": "insights_new",
+   "fieldtype": "Int",
+   "label": "Insights New",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_counts",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "insights_updated",
+   "fieldtype": "Int",
+   "label": "Insights Updated",
+   "read_only": 1
+  },
+  {
+   "fieldname": "insights_skipped",
+   "fieldtype": "Int",
+   "label": "Booked Rows Kept",
+   "read_only": 1
+  },
+  {
+   "fieldname": "errors",
+   "fieldtype": "Int",
+   "label": "Errors",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_summary",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "summary",
+   "fieldtype": "Small Text",
+   "label": "Summary",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-10-27 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Meta Integration",
+ "name": "Meta Sync Run",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1
+  },
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager"
+  }
+ ],
+ "sort_field": "started_on",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}
