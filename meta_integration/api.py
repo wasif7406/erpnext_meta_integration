@@ -91,6 +91,20 @@ def release_entry(entry):
 	return reporting.release_entry(entry)
 
 
+@frappe.whitelist()
+def health():
+	"""Which code is this site actually running? (deploy verification)"""
+	import meta_integration as package
+
+	from .constants import BUILD
+
+	return {
+		"app": "meta_integration",
+		"version": package.__version__,
+		"build": BUILD,
+	}
+
+
 # ---------------------------------------------------------------------------
 def _get(account):
 	if not account:

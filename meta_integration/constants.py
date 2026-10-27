@@ -1,5 +1,9 @@
 """Constants that are Meta-wide (not company-specific)."""
 
+# Bumped whenever we need to prove which code a site is actually running; call
+# `meta_integration.api.health` after a deploy and compare.
+BUILD = "2026-10-27.1"
+
 BASE_URL = "https://graph.facebook.com"
 
 # Marketing API v25.0 (released 2026-02-18); v24.0 expires 2026-10-06.
