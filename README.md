@@ -132,6 +132,22 @@ Two shapes, chosen per entry:
 Card and wallet charges are already paid, so no Payment Entry is needed for them; AP is only
 used when Facebook or an agency actually grants terms.
 
+### Monthly control report: `Meta Spend vs Charges`
+
+One row per month (and per Meta account): insight spend, charges posted, difference, draft
+entries, and a status pill.
+
+| Status | Meaning |
+|---|---|
+| OK | charged within 1.00 of spend |
+| Spend not charged | charged less than spend → a missing charge, or the last days of the month not billed yet |
+| Charged > spend | charged more than spend → overcharge, tax, or a charge from another ad account |
+| Charge without spend | a charge in a month with no spend rows (e.g. VAT-only, or wrong account) |
+| Draft entries | a `Meta Billing` entry is still unposted |
+
+It reads `Meta Insight` and `Meta Billing` only — it never posts. Run it before closing a
+month; a red/orange row is the cue to check the card statement.
+
 Why not from Meta's API: for card-funded accounts Meta exposes **no** invoices, payment
 cycles or transactions (`adspaymentcycles`, `transactions`, `invoices` all return HTTP 400 —
 verified on this account). The billing evidence is the card charge; `spend` comes from

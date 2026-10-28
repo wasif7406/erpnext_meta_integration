@@ -138,7 +138,12 @@ Adopted model (`Meta Account.expense_recognition`):
 | **Billing** (default) | when the card is charged | `Meta Billing` → Purchase Invoice (`Dr Advertising Expense / Cr Creditors`) | Payment Entry from the bank/wallet feed |
 | Accrual | as the spend happens | `Meta Expense Entry` → Journal Entry | Payment Entry when the payout/settlement lands |
 
-`Meta Insight` stays in both modes and is analytics-only in billing mode. The accrual path is
+`Meta Insight` stays in both modes and is analytics-only in billing mode.
+
+The control that closes the loop is `Meta Spend vs Charges` (Script Report): per month and
+account, Σ insight spend (converted to company currency) vs Σ posted billing charges, with a
+status — `OK`, `Spend not charged`, `Charged > spend`, `Charge without spend`, `Draft entries`.
+It reads data only; the ledger is never touched. Tolerable difference: 1.00. The accrual path is
 kept because it is useful for agencies or credit-line ad accounts where month-end matching
 matters, and because the same selection logic feeds the ROAS view.
 
