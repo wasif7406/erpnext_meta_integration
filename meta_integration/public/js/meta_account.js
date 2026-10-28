@@ -5,25 +5,33 @@ frappe.ui.form.on("Meta Account", {
 		if (frm.is_new()) return;
 
 		frm.add_custom_button(__("Sync now"), () => sync_now(frm));
-		frm.add_custom_button(__("Book expenses…"), () => open_booking_dialog(frm));
-		frm.add_custom_button(
-			__("Book previous month"),
-			() => {
-				frappe.confirm(
-					__("Book the previous month's selected spend on {0}?", [frm.doc.account_name]),
-					() => {
-						frappe.call({
-							method: "meta_integration.api.book_previous_month",
-							args: { account: frm.doc.name },
-							freeze: true,
-							freeze_message: __("Posting expense…"),
-							callback: (r) => show_booking_result(r.message),
-						});
-					}
-				);
-			},
-			__("More")
-		);
+
+		const mode = frm.doc.expense_recognition || "Billing (Purchase Invoice)";
+		if (mode === "Billing (Purchase Invoice)") {
+			// Expense is recognised when Facebook charges the card: one Purchase
+			// Invoice per charge, settled by a Payment Entry from the statement.
+			frm.add_custom_button(__("Record billing charge"), () => open_billing_dialog(frm));
+		} else {
+			frm.add_custom_button(__("Book expenses…"), () => open_booking_dialog(frm));
+			frm.add_custom_button(
+				__("Book previous month"),
+				() => {
+					frappe.confirm(
+						__("Book the previous month's selected spend on {0}?", [frm.doc.account_name]),
+						() => {
+							frappe.call({
+								method: "meta_integration.api.book_previous_month",
+								args: { account: frm.doc.name },
+								freeze: true,
+								freeze_message: __("Posting expense…"),
+								callback: (r) => show_booking_result(r.message),
+							});
+						}
+					);
+				},
+				__("More")
+			);
+		}
 	},
 	company(frm) {
 		set_mapping_queries(frm);
@@ -89,6 +97,86 @@ function open_booking_dialog(frm) {
 		(values) => preview_then_book(frm, values),
 		__("Book Meta expenses"),
 		__("Preview")
+	);
+}
+
+function open_billing_dialog(frm) {
+	// One entry per card charge / invoice: amount comes from the statement.
+	frappe.prompt(
+		[
+			{
+				fieldname: "billing_date",
+				fieldtype: "Date",
+				label: __("Billing Date"),
+				default: frappe.datetime.get_today(),
+				reqd: 1,
+			},
+			{
+				fieldname: "amount",
+				fieldtype: "Currency",
+				label: __("Amount Charged"),
+				reqd: 1,
+			},
+			{
+				fieldname: "currency",
+				fieldtype: "Data",
+				label: __("Currency"),
+				default: frm.doc.currency || frappe.defaults.get_default("currency"),
+			},
+			{
+				fieldname: "exchange_rate",
+				fieldtype: "Float",
+				label: __("Exchange Rate"),
+				default: frm.doc.exchange_rate || 1,
+			},
+			{
+				fieldname: "reference",
+				fieldtype: "Data",
+				label: __("Reference (card / statement id)"),
+			},
+			{
+				fieldname: "period_from",
+				fieldtype: "Date",
+				label: __("Ad Period From"),
+			},
+			{
+				fieldname: "period_to",
+				fieldtype: "Date",
+				label: __("Ad Period To"),
+			},
+		],
+		(values) => {
+			frappe.call({
+				method: "meta_integration.api.record_billing",
+				args: Object.assign({ account: frm.doc.name }, values),
+				freeze: true,
+				callback: (r) => {
+					const name = (r.message || {}).billing;
+					if (!name) return;
+					frappe.confirm(__("Billing entry {0} created. Post the Purchase Invoice now?", [name]), () => {
+						frappe.call({
+							method: "meta_integration.api.post_billing_purchase_invoice",
+							args: { billing: name },
+							freeze: true,
+							freeze_message: __("Posting Purchase Invoice..."),
+							callback: (res) => {
+								const out = res.message || {};
+								if (out.purchase_invoice) {
+									frappe.show_alert({
+										message: __("Invoice {0} posted", [out.purchase_invoice]),
+										indicator: "green",
+									});
+								}
+								frappe.set_route("Form", "Meta Billing", name);
+							},
+						});
+					});
+					frm.reload_doc();
+				},
+			});
+		},
+		__("Record Meta billing charge"),
+		__("Save")
 	);
 }
 

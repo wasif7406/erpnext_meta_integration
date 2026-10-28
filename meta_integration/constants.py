@@ -2,7 +2,7 @@
 
 # Bumped whenever we need to prove which code a site is actually running; call
 # `meta_integration.api.health` after a deploy and compare.
-BUILD = "2026-10-28.5"
+BUILD = "2026-10-29.1"
 
 BASE_URL = "https://graph.facebook.com"
 
@@ -28,6 +28,12 @@ ACCOUNT_RULES = {
 # ---------------------------------------------------------------------------
 # Booking
 # ---------------------------------------------------------------------------
+# How the expense reaches the ledger.
+#   billing  : Purchase Invoice from the card/statement charge, settled by Payment Entry
+#   accrual  : daily spend booked against a payable (Journal Entry)
+RECOGNITION_BILLING = "Billing (Purchase Invoice)"
+RECOGNITION_ACCRUAL = "Accrual (spend)"
+
 BOOKING_JOURNAL_ENTRY = "Journal Entry"
 BOOKING_PURCHASE_INVOICE = "Purchase Invoice"
 BOOKING_MODES = (BOOKING_JOURNAL_ENTRY, BOOKING_PURCHASE_INVOICE)

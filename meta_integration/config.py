@@ -9,6 +9,7 @@ from frappe.utils import cint, flt
 
 from .constants import (
 	ACCOUNT_RULES,
+	RECOGNITION_BILLING,
 	BOOKING_JOURNAL_ENTRY,
 	BOOKING_MODES,
 	DEFAULT_API_VERSION,
@@ -81,6 +82,9 @@ class AccountConfig:
 		self.currency = (account.get("currency") or self.company_currency or "").strip()
 		self.exchange_rate = flt(account.get("exchange_rate")) or 1.0
 		self.booking_mode = account.get("booking_mode") or BOOKING_JOURNAL_ENTRY
+		self.expense_recognition = (
+			account.get("expense_recognition") or RECOGNITION_BILLING
+		)
 		self.supplier = account.get("supplier") or None
 		# Nothing before this date may be booked: it is already in the ledger.
 		self.expense_start_date = (
@@ -155,6 +159,7 @@ class AccountConfig:
 			"exchange_rate": self.exchange_rate,
 			"booking_mode": self.booking_mode,
 			"expense_start_date": self.expense_start_date,
+			"expense_recognition": self.expense_recognition,
 		}
 
 

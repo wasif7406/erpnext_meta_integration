@@ -123,6 +123,25 @@ both `total_spend` (account currency) and `base_amount` (company currency).
 
 ---
 
+## 5b. Recognition: billing vs accrual
+
+The first version booked daily spend to a payable. That is not how ad spend actually
+settles, and it doubles the ledger's work: Meta's API exposes **no** billing documents for
+card-funded accounts (`adspaymentcycles`, `adspaymentcycle`, `transactions`, `invoices` all
+return HTTP 400), so there is nothing to reconcile a daily accrual against except the card
+statement itself.
+
+Adopted model (`Meta Account.expense_recognition`):
+
+| Mode | Expense recognised | Document | Settlement |
+|---|---|---|---|
+| **Billing** (default) | when the card is charged | `Meta Billing` → Purchase Invoice (`Dr Advertising Expense / Cr Creditors`) | Payment Entry from the bank/wallet feed |
+| Accrual | as the spend happens | `Meta Expense Entry` → Journal Entry | Payment Entry when the payout/settlement lands |
+
+`Meta Insight` stays in both modes and is analytics-only in billing mode. The accrual path is
+kept because it is useful for agencies or credit-line ad accounts where month-end matching
+matters, and because the same selection logic feeds the ROAS view.
+
 ## 6. Decisions
 
 1. **One `Meta Insight` row per ad per day** instead of storing campaign/adset totals —

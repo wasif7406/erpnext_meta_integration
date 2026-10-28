@@ -13,6 +13,7 @@ doctype_js = {
 	"Meta Campaign": "public/js/meta_reporting.js",
 	"Meta Ad Set": "public/js/meta_reporting.js",
 	"Meta Ad": "public/js/meta_reporting.js",
+	"Meta Billing": "public/js/meta_billing.js",
 }
 
 before_install = "meta_integration.install.before_install"

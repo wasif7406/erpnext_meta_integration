@@ -14,6 +14,7 @@ from frappe.utils import getdate
 from .config import AccountConfig
 from .constants import (
 	BOOKING_PURCHASE_INVOICE,
+	RECOGNITION_BILLING,
 	STATUS_BOOKED,
 	STATUS_DRAFT,
 	STATUS_FAILED,
@@ -136,6 +137,18 @@ def book_expenses(account, from_date, to_date, posting_date=None, dry_run=False)
 		config = AccountConfig(account)
 	except MetaConfigError as exc:
 		result.update({"status": STATUS_FAILED, "error": str(exc)})
+		return result
+
+	if config.expense_recognition == RECOGNITION_BILLING:
+		result.update(
+			{
+				"status": STATUS_SKIPPED,
+				"reason": (
+					"this account recognises expense from billing: record the card charge "
+					"as a Meta Billing entry (Purchase Invoice) instead of booking daily spend"
+				),
+			}
+		)
 		return result
 
 	if getdate(to_date) < getdate(from_date):

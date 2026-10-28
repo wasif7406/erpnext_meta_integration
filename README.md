@@ -4,17 +4,23 @@ Meta (Facebook / Instagram) **ad spend** into ERPNext as an **expense + payable*
 Expense only — no leads, no CRM, no catalogue or creative sync.
 
 ```
-Meta ad account ──sync──> Meta Campaign / Ad Set / Ad  (cached, browsable)
-                        └> Meta Insight              (one row = one ad's spend on one day)
-                                   │
-                    tick "Report to ERPNext" on the campaign / ad set / ad
-                                   │
-                          book a period (button)
-                                   ▼
-             Meta Expense Entry ──> Dr Advertising Expense
-                                    Cr Payable (Supplier)      [Journal Entry]
-                                 or Purchase Invoice             [optional mode]
+Meta ad account ──sync──> Meta Campaign / Ad Set / Ad   cached, browsable
+                        └> Meta Insight               one row = one ad's spend on one day
+                                                          │
+                              ANALYTICS (no GL impact) ───┘  ROAS, campaign performance
+
+Card / statement charge ──> Meta Billing ──> Purchase Invoice
+                                              Dr Advertising Expense
+                                              Cr Creditors (Supplier = Facebook)
+                                            └─> Payment Entry (bank / wallet feed)
 ```
+
+Two recognition modes (`Meta Account.expense_recognition`):
+
+- **Billing (default)** — expense hits the ledger when Facebook charges the card, as a
+  Purchase Invoice settled by a Payment Entry. Daily spend is analytics only.
+- **Accrual** — daily spend is booked against a payable (Journal Entry per period). Use this
+  only if you need strict month-end matching.
 
 ## Why it looks like this
 
@@ -52,7 +58,9 @@ never touches existing Sales/Purchase customisations.
 | `api_version` | Marketing API version, default `v25.0` |
 | `currency` | filled by the sync from the ad account |
 | `exchange_rate` | account currency → company currency (required if they differ) |
-| `booking_mode` | `Journal Entry` (default) or `Purchase Invoice` |
+| `expense_recognition` | `Billing (Purchase Invoice)` (default) or `Accrual (spend)` |
+| `expense_start_date` | cutover: spend before this date is already in the ledger and is never booked |
+| `booking_mode` | accrual mode only: `Journal Entry` or `Purchase Invoice` |
 | `supplier` | party for the payable / supplier of the bill |
 | `purchase_item` | service item, only for `Purchase Invoice` mode |
 | `enable_sync` | master switch for the daily sync |
@@ -104,7 +112,22 @@ straight from the list view):
 The most specific tick does not "override" an ancestor — selection is a union, and
 because rows are ad-level each ad-day is still counted once.
 
-## 5. Booking a period
+## 5. Recording a charge (billing mode)
+
+**Record billing charge** on the account → date, amount (as charged), currency + exchange
+rate if the card is billed in another currency, the card/statement reference, and optionally
+the ad period it covers. That creates a `Meta Billing` entry; **Create Purchase Invoice**
+(on the entry) posts `Dr Advertising Expense / Cr Creditors` with `bill_no` = the reference.
+
+Settle it with a normal **Payment Entry** when the bank/wallet statement clears
+(`Dr Creditors / Cr Bank`), using ERPNext's bank reconciliation against the statement line.
+
+Why not from Meta's API: for card-funded accounts Meta exposes **no** invoices, payment
+cycles or transactions (`adspaymentcycles`, `transactions`, `invoices` all return HTTP 400 —
+verified on this account). The billing evidence is the card charge; `spend` comes from
+insights only.
+
+## 5b. Booking a period (accrual mode, optional)
 
 **Book expenses…** on the account → pick `from_date` / `to_date` (defaults to the
 previous month) and a `posting_date` → the dialog previews unbooked rows, selected rows,
@@ -149,10 +172,13 @@ is what is posted. If both currencies are equal the rate is irrelevant.
 | `meta_integration.api.book_expenses(account, from_date, to_date, posting_date=None, dry_run=0)` | create entry + voucher |
 | `meta_integration.api.book_previous_month(account, posting_date=None)` | convenience wrapper |
 | `meta_integration.api.release_entry(entry)` | un-stamp after the voucher was cancelled |
+| `meta_integration.api.record_billing(account, billing_date, amount, …)` | create a Meta Billing entry from a card charge |
+| `meta_integration.api.post_billing_purchase_invoice(billing)` | post the Purchase Invoice for a billing entry |
 
 ## 8. Deliberately out of scope
 
 - Leads, forms, CRM, audiences, creatives, catalogues — spend only.
+- Pulling Meta invoices/payment cycles: not available for card-funded accounts (see §5).
 - Per-campaign expense account overrides (one expense account per Meta account).
 - Automatic FX rates (one manual rate per account; change it before booking a month in
   a different rate environment).

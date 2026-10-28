@@ -3,6 +3,7 @@
 import frappe
 from frappe import _
 
+from . import billing as billing_module
 from . import reporting, sync
 from .config import get_account
 from .exceptions import MetaConfigError
@@ -89,6 +90,42 @@ def release_entry(entry):
 	"""Un-stamp a booked period whose voucher was cancelled (then re-book it)."""
 	frappe.only_for(WRITE_ROLES)
 	return reporting.release_entry(entry)
+
+
+@frappe.whitelist()
+def record_billing(
+	account,
+	billing_date=None,
+	amount=0,
+	currency=None,
+	exchange_rate=None,
+	reference=None,
+	period_from=None,
+	period_to=None,
+	remarks=None,
+):
+	"""Record one Meta card charge / invoice (billing recognition)."""
+	frappe.only_for(WRITE_ROLES)
+	_get(account)
+	name = billing_module.record_billing(
+		account,
+		billing_date=billing_date,
+		amount=amount,
+		currency=currency,
+		exchange_rate=exchange_rate,
+		reference=reference,
+		period_from=period_from,
+		period_to=period_to,
+		remarks=remarks,
+	)
+	return {"billing": name}
+
+
+@frappe.whitelist()
+def post_billing_purchase_invoice(billing):
+	"""Create + submit the Purchase Invoice for a Meta Billing entry."""
+	frappe.only_for(WRITE_ROLES)
+	return billing_module.post_purchase_invoice(billing)
 
 
 @frappe.whitelist()
