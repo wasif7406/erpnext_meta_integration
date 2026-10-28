@@ -7,7 +7,7 @@ from .client import MetaClient
 from .config import get_account
 from .constants import STATUS_FAILED
 from .exceptions import MetaAPIError
-from .utils import insight_key, log_error, money, snippet, sync_window
+from .utils import insight_key, log_error, meta_datetime, money, snippet, sync_window
 
 SYNC_RUN = "Meta Sync Run"
 
@@ -191,8 +191,8 @@ def _upsert_entity(account, kind, row, maps):
 				"lifetime_budget": _to_float(row.get("lifetime_budget"))
 				if row.get("lifetime_budget")
 				else None,
-				"start_time": row.get("start_time"),
-				"stop_time": row.get("stop_time"),
+				"start_time": meta_datetime(row.get("start_time")),
+				"stop_time": meta_datetime(row.get("stop_time")),
 			}
 		)
 		name = identity
@@ -211,8 +211,8 @@ def _upsert_entity(account, kind, row, maps):
 				else None,
 				"optimization_goal": row.get("optimization_goal"),
 				"billing_event": row.get("billing_event"),
-				"start_time": row.get("start_time"),
-				"end_time": row.get("end_time"),
+				"start_time": meta_datetime(row.get("start_time")),
+				"end_time": meta_datetime(row.get("end_time")),
 			}
 		)
 		name = identity

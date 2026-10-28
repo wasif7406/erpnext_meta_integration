@@ -54,6 +54,19 @@ def now():
 	return now_datetime()
 
 
+def meta_datetime(value) -> str | None:
+	"""Meta timestamps are ISO-8601 with a numeric offset, e.g.
+	`2026-09-27T16:29:59+0500`. Frappe/MySQL want `YYYY-MM-DD HH:MM:SS`, so keep
+	the wall-clock part (ad-account local time) and drop the offset — these fields
+	are informational (campaign/ad set start and end).
+	"""
+	text = str(value or "").strip()
+	if not text:
+		return None
+	text = text[:19].replace("T", " ")
+	return text if len(text) == 19 else None
+
+
 def chunked(items, size=200):
 	items = list(items)
 	for start in range(0, len(items), size):
