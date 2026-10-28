@@ -1,3 +1,3 @@
-"""Meta (Facebook/Instagram) Ads spend integration for ERPNext."""
+"""Meta (Facebook/Instagram) ad spend analytics for ERPNext — read-only."""
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"

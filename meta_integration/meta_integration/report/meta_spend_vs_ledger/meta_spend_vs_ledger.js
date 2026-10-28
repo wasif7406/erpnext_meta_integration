@@ -1,4 +1,4 @@
-frappe.query_reports["Meta Spend vs Charges"] = {
+frappe.query_reports["Meta Spend vs Ledger"] = {
 	filters: [
 		{
 			fieldname: "from_date",
@@ -34,10 +34,10 @@ frappe.query_reports["Meta Spend vs Charges"] = {
 		const colour =
 			{
 				OK: "green",
-				"Spend not charged": "orange",
-				"Charged > spend": "red",
-				"Charge without spend": "red",
-				"Draft entries": "blue",
+				"Spend not in ledger": "orange",
+				"Ledger > spend": "red",
+				"Ledger without spend": "gray",
+				"Partial month": "gray",
 			}[value] || "gray";
 		return `<span class="indicator-pill ${colour}">${frappe.utils.escape_html(
 			value || ""

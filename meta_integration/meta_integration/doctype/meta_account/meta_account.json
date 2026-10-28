@@ -2,9 +2,9 @@
  "actions": [],
  "autoname": "format:MEA-{####}",
  "creation": "2026-10-27 10:00:00.000000",
- "description": "One Meta ad account (token, ad account id, mapping). A company usually has one; several are allowed, exactly one may be default.",
+ "description": "A Meta ad account to mirror for analytics. Read-only: nothing here posts to the ledger.",
  "doctype": "DocType",
- "editable_grid": 1,
+ "editable_grid": 0,
  "engine": "InnoDB",
  "field_order": [
   "account_name",
@@ -18,23 +18,16 @@
   "access_token",
   "app_id",
   "app_secret",
-  "section_break_money",
+  "section_break_reporting",
   "currency",
   "exchange_rate",
-  "booking_mode",
-  "expense_recognition",
+  "expense_account",
   "expense_start_date",
-  "supplier",
-  "purchase_item",
-  "default_paid_from",
-  "column_break_money",
+  "column_break_reporting",
   "enable_sync",
-  "enable_auto_booking",
   "sync_days",
   "last_sync_on",
-  "last_run_result",
-  "section_break_mapping",
-  "mapping"
+  "last_run_result"
  ],
  "fields": [
   {
@@ -75,6 +68,7 @@
    "description": "e.g. act_1234567890 (or just the numeric id)",
    "fieldname": "ad_account_id",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Ad Account ID",
    "reqd": 1
   },
@@ -93,8 +87,7 @@
   {
    "fieldname": "access_token",
    "fieldtype": "Password",
-   "label": "Access Token",
-   "length": 1000
+   "label": "Access Token"
   },
   {
    "fieldname": "app_id",
@@ -104,13 +97,12 @@
   {
    "fieldname": "app_secret",
    "fieldtype": "Password",
-   "label": "App Secret (informational)",
-   "length": 1000
+   "label": "App Secret (informational)"
   },
   {
-   "fieldname": "section_break_money",
+   "fieldname": "section_break_reporting",
    "fieldtype": "Section Break",
-   "label": "Currency & Booking"
+   "label": "Currency & Reporting"
   },
   {
    "description": "Filled by the sync from the ad account (spend is reported in this currency).",
@@ -121,56 +113,26 @@
   },
   {
    "default": "1",
-   "description": "Ad account currency -> company currency. Required when they differ.",
+   "description": "Ad account currency -> company currency, used only by the report.",
    "fieldname": "exchange_rate",
    "fieldtype": "Float",
    "label": "Exchange Rate"
   },
   {
-   "default": "Journal Entry",
-   "fieldname": "booking_mode",
-   "fieldtype": "Select",
-   "label": "Booking Mode",
-   "options": "Journal Entry\nPurchase Invoice"
+   "description": "The ledger account you book ad spend to. The report compares its GL movement with Meta spend.",
+   "fieldname": "expense_account",
+   "fieldtype": "Link",
+   "label": "Advertising Expense Account",
+   "options": "Account"
   },
   {
-   "fieldname": "expense_recognition",
-   "fieldtype": "Select",
-   "label": "Expense Recognition",
-   "options": "\nBilling (Purchase Invoice)\nAccrual (spend)",
-   "default": "Billing (Purchase Invoice)",
-   "description": "Billing: post the card charge as a Purchase Invoice and settle it from the statement (recommended). Accrual: post daily spend to the GL."
-  },
-  {
+   "description": "Ignore Meta spend before this date: it is already in the ledger from the previous system. The report starts here.",
    "fieldname": "expense_start_date",
    "fieldtype": "Date",
-   "label": "Expense Start Date",
-   "description": "Spend before this date is already in the ledger; only spend from this date on is booked. Defaults to the account creation date."
+   "label": "Data Starts On"
   },
   {
-   "description": "Party on the payable line (Journal Entry) / supplier of the bill (Purchase Invoice).",
-   "fieldname": "supplier",
-   "fieldtype": "Link",
-   "label": "Supplier",
-   "options": "Supplier"
-  },
-  {
-   "depends_on": "eval:doc.booking_mode == 'Purchase Invoice'",
-   "description": "Service / non-stock item used as the bill line.",
-   "fieldname": "purchase_item",
-   "fieldtype": "Link",
-   "label": "Purchase Item",
-   "options": "Item"
-  },
-  {
-   "fieldname": "default_paid_from",
-   "fieldtype": "Link",
-   "options": "Account",
-   "label": "Default Paid From",
-   "description": "Account the card/wallet charges are paid from (pre-fills every billing entry)."
-  },
-  {
-   "fieldname": "column_break_money",
+   "fieldname": "column_break_reporting",
    "fieldtype": "Column Break"
   },
   {
@@ -178,13 +140,6 @@
    "fieldname": "enable_sync",
    "fieldtype": "Check",
    "label": "Enable Sync"
-  },
-  {
-   "default": "0",
-   "description": "Book the previous month automatically on the 1st. Off by default: booking is a manual decision.",
-   "fieldname": "enable_auto_booking",
-   "fieldtype": "Check",
-   "label": "Auto Book Previous Month"
   },
   {
    "default": "7",
@@ -204,22 +159,11 @@
    "fieldtype": "Small Text",
    "label": "Last Run Result",
    "read_only": 1
-  },
-  {
-   "fieldname": "section_break_mapping",
-   "fieldtype": "Section Break",
-   "label": "Account Mapping"
-  },
-  {
-   "fieldname": "mapping",
-   "fieldtype": "Table",
-   "label": "Mapping",
-   "options": "Meta Account Mapping"
   }
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-29 12:00:00.000000",
+ "modified": "2026-10-29 14:00:00.000000",
  "modified_by": "Administrator",
  "module": "Meta Integration",
  "name": "Meta Account",
@@ -238,13 +182,19 @@
    "write": 1
   },
   {
-   "email": 1,
    "export": 1,
    "print": 1,
    "read": 1,
    "report": 1,
    "role": "Accounts Manager",
    "share": 1
+  },
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts User"
   }
  ],
  "search_fields": "account_name,company,ad_account_id",

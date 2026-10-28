@@ -5,67 +5,47 @@ import frappe
 
 def sync_all_accounts():
 	"""Daily: refresh campaigns/ad sets/ads and the last N days of spend."""
-	_enqueue_for_all("meta_integration.sync.sync_account", "meta-sync")
-
-
-def book_previous_month():
-	"""Monthly (1st): book last month for accounts that opted in."""
-	from .reporting import book_all
-
-	try:
-		book_all()
-	except Exception:
-		frappe.log_error(
-			title="Meta monthly booking failed",
-			message=frappe.get_traceback(),
-		)
+	for row in _enabled_accounts():
+		try:
+			frappe.enqueue(
+				"meta_integration.sync.sync_account",
+				queue="long",
+				timeout=1800,
+				is_async=True,
+				job_name=f"meta-sync-{row.name}",
+				account=row.name,
+			)
+		except Exception:
+			frappe.log_error(
+				title="Meta enqueue failed",
+				message=f"{row.name}\n{frappe.get_traceback()}",
+			)
 
 
 def prune_logs():
 	from frappe.utils import add_days, nowdate
 
 	cutoff = add_days(nowdate(), -180)
-	for doctype in ("Meta Sync Run",):
-		try:
-			names = frappe.get_all(
-				doctype, filters={"creation": ("<", cutoff)}, pluck="name", limit=5000
-			)
-			for name in names:
-				frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)
-			if names:
-				frappe.db.commit()
-		except Exception:
-			frappe.log_error(
-				title="Meta log pruning failed",
-				message=f"{doctype}\n{frappe.get_traceback()}",
-			)
+	try:
+		names = frappe.get_all(
+			"Meta Sync Run", filters={"creation": ("<", cutoff)}, pluck="name", limit=5000
+		)
+		for name in names:
+			frappe.delete_doc("Meta Sync Run", name, force=True, ignore_permissions=True)
+		if names:
+			frappe.db.commit()
+	except Exception:
+		frappe.log_error(
+			title="Meta log pruning failed",
+			message=frappe.get_traceback(),
+		)
 
 
 # ---------------------------------------------------------------------------
 def _enabled_accounts():
 	return frappe.get_all(
-		"Meta Account",
-		filters={"enabled": 1, "enable_sync": 1},
-		fields=["name", "company"],
+		"Meta Account", filters={"enabled": 1, "enable_sync": 1}, fields=["name", "company"]
 	)
-
-
-def _enqueue_for_all(method, job_prefix):
-	for row in _enabled_accounts():
-		try:
-			frappe.enqueue(
-				method,
-				queue="long",
-				timeout=1800,
-				is_async=True,
-				job_name=f"{job_prefix}-{row.name}",
-				account=row.name,
-			)
-		except Exception:
-			frappe.log_error(
-				title="Meta enqueue failed",
-				message=f"{method} / {row.name}\n{frappe.get_traceback()}",
-			)
 
 
 def run_locked(kind, account_name, fn, **kwargs):

@@ -5,7 +5,6 @@ from frappe.utils import cint, flt, now_datetime
 
 from .client import MetaClient
 from .config import get_account
-from .constants import STATUS_FAILED
 from .exceptions import MetaAPIError
 from .utils import insight_key, log_error, meta_datetime, money, snippet, sync_window
 
@@ -25,7 +24,7 @@ def sync_all(company=None) -> dict:
 			out["results"][name] = sync_account(name)
 		except Exception:
 			log_error("Meta sync failed", f"{name}\n{frappe.get_traceback()}")
-			out["results"][name] = {"status": STATUS_FAILED}
+			out["results"][name] = {"status": "Failed"}
 	return out
 
 
@@ -143,12 +142,8 @@ def _sync_entities(account, client, result) -> dict:
 
 def _existing_map(account, kind) -> dict:
 	doctype, _id_field = _entity_doctype(kind)
-	rows = frappe.get_all(
-		doctype,
-		filters={"meta_account": account},
-		fields=["name", "report_to_erpnext"],
-	)
-	return {row.name: row.report_to_erpnext for row in rows}
+	rows = frappe.get_all(doctype, filters={"meta_account": account}, pluck="name")
+	return {name: None for name in rows}
 
 
 def _entity_doctype(kind):
@@ -374,7 +369,7 @@ def _finish_run(run, result):
 		run.name,
 		{
 			"finished_on": now_datetime(),
-			"status": result.get("status") or STATUS_FAILED,
+			"status": result.get("status") or "Failed",
 			"campaigns": result.get("campaigns", 0),
 			"ad_sets": result.get("ad_sets", 0),
 			"ads": result.get("ads", 0),

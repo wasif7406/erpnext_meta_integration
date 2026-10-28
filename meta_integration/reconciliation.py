@@ -1,28 +1,28 @@
-"""Monthly reconciliation: spend pulled from Meta vs charges actually posted.
+"""Monthly control: spend pulled from Meta vs what was booked in the ledger.
 
-This is a control, not accounting: it answers "did every month's spend get
-charged, and did we miss a charge?". Nothing here posts to the ledger.
+The app never posts; this only compares. Any voucher that debited the mapped
+advertising expense account counts as "booked" — a manual Journal Entry, a
+Purchase Invoice, an Expense Claim, whatever you used.
 """
 
 from frappe.utils import flt
 
-
-# A cent-level tolerance absorbs rounding between daily spend and a charge.
 DEFAULT_TOLERANCE = 1.0
 
 STATUS_OK = "OK"
-STATUS_MISSING_CHARGE = "Spend not charged"
-STATUS_OVER_CHARGED = "Charged > spend"
-STATUS_DRAFT = "Draft entries"
-STATUS_CHARGE_ONLY = "Charge without spend"
+STATUS_NOT_BOOKED = "Spend not in ledger"
+STATUS_LEDGER_HIGHER = "Ledger > spend"
+STATUS_LEDGER_ONLY = "Ledger without spend"
+STATUS_PARTIAL = "Partial month"
 
 
-def merge_reconciliation(spend_rows, charge_rows, tolerance=DEFAULT_TOLERANCE):
-	"""Merge per-(month, account) spend and charges into report rows.
+def merge_reconciliation(spend_rows, ledger_rows, tolerance=DEFAULT_TOLERANCE, cutovers=None):
+	"""Merge per-(month, account) spend and ledger amounts into report rows.
 
-	Both inputs are iterables of dicts with `month`, `meta_account` and either
-	`spend` or `charged` (+ optional `drafts`). Amounts must already be in the
-	company currency.
+	Inputs are dicts with `month`, `meta_account` and `spend` / `booked`, both in
+	company currency. `cutovers` maps an account to its cutover date
+	(YYYY-MM-DD): that month is only partly covered by the books, so it is flagged
+	rather than judged.
 	"""
 	buckets = {}
 
@@ -33,8 +33,7 @@ def merge_reconciliation(spend_rows, charge_rows, tolerance=DEFAULT_TOLERANCE):
 				"month": str(month),
 				"meta_account": account,
 				"insight_spend": 0.0,
-				"charged": 0.0,
-				"drafts": 0,
+				"booked": 0.0,
 			}
 		return buckets[key]
 
@@ -42,23 +41,28 @@ def merge_reconciliation(spend_rows, charge_rows, tolerance=DEFAULT_TOLERANCE):
 		target = bucket(row.get("month"), row.get("meta_account"))
 		target["insight_spend"] = flt(target["insight_spend"]) + flt(row.get("spend"))
 
-	for row in charge_rows or []:
+	for row in ledger_rows or []:
 		target = bucket(row.get("month"), row.get("meta_account"))
-		target["charged"] = flt(target["charged"]) + flt(row.get("charged"))
-		target["drafts"] = int(target["drafts"]) + int(row.get("drafts") or 0)
+		target["booked"] = flt(target["booked"]) + flt(row.get("booked"))
+
+	cutovers = cutovers or {}
 
 	rows = []
 	running = {}
 	for key in sorted(buckets):
 		row = buckets[key]
 		row["insight_spend"] = flt(row["insight_spend"], 2)
-		row["charged"] = flt(row["charged"], 2)
-		row["difference"] = flt(row["charged"] - row["insight_spend"], 2)
+		row["booked"] = flt(row["booked"], 2)
+		row["difference"] = flt(row["booked"] - row["insight_spend"], 2)
 		row["status"] = _status(row, tolerance)
 
-		# Meta bills on a cycle/threshold, not a calendar month, so the monthly
-		# difference is noisy by nature; the running difference is the real
-		# tie-out and must return to ~0 once billing catches up.
+		cutover = cutovers.get(row["meta_account"])
+		if cutover:
+			cutover = str(cutover)[:10]
+			if row["month"] == cutover[:7] and cutover[8:10] != "01":
+				# The books only cover part of this month; comparing it is noise.
+				row["status"] = STATUS_PARTIAL
+
 		account = row["meta_account"] or ""
 		running[account] = flt(running.get(account, 0.0) + row["difference"], 2)
 		row["cumulative_difference"] = running[account]
@@ -68,15 +72,15 @@ def merge_reconciliation(spend_rows, charge_rows, tolerance=DEFAULT_TOLERANCE):
 
 def _status(row, tolerance) -> str:
 	spend = flt(row["insight_spend"])
-	charged = flt(row["charged"])
-	diff = charged - spend
+	booked = flt(row["booked"])
+	diff = booked - spend
 
 	if abs(diff) <= flt(tolerance):
-		return STATUS_DRAFT if row.get("drafts") else STATUS_OK
-	if spend <= 0 and charged > 0:
-		return STATUS_CHARGE_ONLY
+		return STATUS_OK
+	if spend <= 0 and booked != 0:
+		return STATUS_LEDGER_ONLY
 	if diff < 0:
-		# charged less than the spend we recorded: a missing charge, or the last
-		# days of the month not billed yet.
-		return STATUS_DRAFT if row.get("drafts") else STATUS_MISSING_CHARGE
-	return STATUS_OVER_CHARGED
+		# Less booked than spent: a charge not recorded yet, or the tail of the
+		# month that is billed in the next cycle.
+		return STATUS_NOT_BOOKED
+	return STATUS_LEDGER_HIGHER

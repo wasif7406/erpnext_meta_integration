@@ -1,109 +1,70 @@
-"""Monthly spend-vs-charge reconciliation (pure logic, no site needed)."""
+"""Monthly spend-vs-ledger reconciliation (pure logic, no site needed)."""
 
 import unittest
 
 from meta_integration.reconciliation import (
-	STATUS_CHARGE_ONLY,
-	STATUS_DRAFT,
-	STATUS_MISSING_CHARGE,
+	STATUS_LEDGER_HIGHER,
+	STATUS_LEDGER_ONLY,
+	STATUS_NOT_BOOKED,
 	STATUS_OK,
-	STATUS_OVER_CHARGED,
+	STATUS_PARTIAL,
 	merge_reconciliation,
 )
 
 
+def spend(month, amount, account="A"):
+	return {"month": month, "meta_account": account, "spend": amount}
+
+
+def booked(month, amount, account="A"):
+	return {"month": month, "meta_account": account, "booked": amount}
+
+
 class TestMergeReconciliation(unittest.TestCase):
 	def test_matching_month_is_ok(self):
-		rows = merge_reconciliation(
-			[{"month": "2026-10", "meta_account": "A", "spend": 5000}],
-			[{"month": "2026-10", "meta_account": "A", "charged": 5000}],
-		)
+		rows = merge_reconciliation([spend("2026-10", 5000)], [booked("2026-10", 5000)])
 		self.assertEqual(len(rows), 1)
 		self.assertEqual(rows[0]["status"], STATUS_OK)
 		self.assertEqual(rows[0]["difference"], 0)
 
 	def test_small_rounding_is_ok(self):
-		rows = merge_reconciliation(
-			[{"month": "2026-10", "meta_account": "A", "spend": 5000}],
-			[{"month": "2026-10", "meta_account": "A", "charged": 4999.40}],
-		)
+		rows = merge_reconciliation([spend("2026-10", 5000)], [booked("2026-10", 4999.40)])
 		self.assertEqual(rows[0]["status"], STATUS_OK)
 
-	def test_missing_charge(self):
-		rows = merge_reconciliation(
-			[{"month": "2026-10", "meta_account": "A", "spend": 5000}],
-			[{"month": "2026-10", "meta_account": "A", "charged": 4000}],
-		)
-		self.assertEqual(rows[0]["status"], STATUS_MISSING_CHARGE)
+	def test_spend_not_in_ledger(self):
+		rows = merge_reconciliation([spend("2026-10", 5000)], [booked("2026-10", 4000)])
+		self.assertEqual(rows[0]["status"], STATUS_NOT_BOOKED)
 		self.assertEqual(rows[0]["difference"], -1000)
 
-	def test_over_charged(self):
-		rows = merge_reconciliation(
-			[{"month": "2026-10", "meta_account": "A", "spend": 5000}],
-			[{"month": "2026-10", "meta_account": "A", "charged": 5800}],
-		)
-		self.assertEqual(rows[0]["status"], STATUS_OVER_CHARGED)
+	def test_ledger_higher_than_spend(self):
+		rows = merge_reconciliation([spend("2026-10", 5000)], [booked("2026-10", 5800)])
+		self.assertEqual(rows[0]["status"], STATUS_LEDGER_HIGHER)
 		self.assertEqual(rows[0]["difference"], 800)
 
-	def test_charge_without_spend(self):
-		rows = merge_reconciliation(
-			[],
-			[{"month": "2026-10", "meta_account": "A", "charged": 1200}],
-		)
-		self.assertEqual(rows[0]["status"], STATUS_CHARGE_ONLY)
+	def test_ledger_without_spend(self):
+		rows = merge_reconciliation([], [booked("2026-10", 1200)])
+		self.assertEqual(rows[0]["status"], STATUS_LEDGER_ONLY)
 		self.assertEqual(rows[0]["insight_spend"], 0)
 
-	def test_drafts_take_precedence_over_ok(self):
-		rows = merge_reconciliation(
-			[{"month": "2026-10", "meta_account": "A", "spend": 5000}],
-			[{"month": "2026-10", "meta_account": "A", "charged": 5000, "drafts": 1}],
-		)
-		self.assertEqual(rows[0]["status"], STATUS_DRAFT)
-
 	def test_spend_only_month_is_reported(self):
-		rows = merge_reconciliation(
-			[{"month": "2026-10", "meta_account": "A", "spend": 2500}], []
-		)
-		self.assertEqual(rows[0]["charged"], 0)
-		self.assertEqual(rows[0]["status"], STATUS_MISSING_CHARGE)
+		rows = merge_reconciliation([spend("2026-10", 2500)], [])
+		self.assertEqual(rows[0]["booked"], 0)
+		self.assertEqual(rows[0]["status"], STATUS_NOT_BOOKED)
 
-	def test_multiple_accounts_are_kept_apart(self):
+	def test_cumulative_offsets_monthly_noise(self):
+		# October under-booked by 1,000 because billing closed after month end,
+		# November catches up: the running difference returns to zero.
 		rows = merge_reconciliation(
-			[
-				{"month": "2026-10", "meta_account": "A", "spend": 1000},
-				{"month": "2026-10", "meta_account": "B", "spend": 2000},
-			],
-			[
-				{"month": "2026-10", "meta_account": "A", "charged": 1000},
-				{"month": "2026-10", "meta_account": "B", "charged": 1500},
-			],
-		)
-		self.assertEqual(len(rows), 2)
-		self.assertEqual([r["status"] for r in rows], [STATUS_OK, STATUS_MISSING_CHARGE])
-
-	def test_cumulative_difference_offsets_monthly_noise(self):
-		# October under-charged by 1,000 because billing closed after month end,
-		# November catches it up: the running difference returns to zero.
-		rows = merge_reconciliation(
-			[
-				{"month": "2026-10", "meta_account": "A", "spend": 5000},
-				{"month": "2026-11", "meta_account": "A", "spend": 3000},
-			],
-			[
-				{"month": "2026-10", "meta_account": "A", "charged": 4000},
-				{"month": "2026-11", "meta_account": "A", "charged": 4000},
-			],
+			[spend("2026-10", 5000), spend("2026-11", 3000)],
+			[booked("2026-10", 4000), booked("2026-11", 4000)],
 		)
 		self.assertEqual([r["difference"] for r in rows], [-1000, 1000])
 		self.assertEqual([r["cumulative_difference"] for r in rows], [-1000, 0])
 
 	def test_cumulative_is_kept_per_account(self):
 		rows = merge_reconciliation(
-			[
-				{"month": "2026-10", "meta_account": "A", "spend": 1000},
-				{"month": "2026-10", "meta_account": "B", "spend": 1000},
-			],
-			[{"month": "2026-10", "meta_account": "A", "charged": 1000}],
+			[spend("2026-10", 1000, "A"), spend("2026-10", 1000, "B")],
+			[booked("2026-10", 1000, "A")],
 		)
 		by_account = {r["meta_account"]: r["cumulative_difference"] for r in rows}
 		self.assertEqual(by_account["A"], 0)
@@ -111,13 +72,25 @@ class TestMergeReconciliation(unittest.TestCase):
 
 	def test_rows_are_sorted_by_month(self):
 		rows = merge_reconciliation(
-			[
-				{"month": "2026-11", "meta_account": "A", "spend": 10},
-				{"month": "2026-09", "meta_account": "A", "spend": 10},
-			],
-			[],
+			[spend("2026-11", 10), spend("2026-09", 10)], []
 		)
 		self.assertEqual([r["month"] for r in rows], ["2026-09", "2026-11"])
+
+	def test_cutover_month_is_flagged_partial(self):
+		rows = merge_reconciliation(
+			[spend("2026-10", 500), spend("2026-11", 3000)],
+			[booked("2026-10", 500), booked("2026-11", 3000)],
+			cutovers={"A": "2026-10-21"},
+		)
+		by_month = {r["month"]: r["status"] for r in rows}
+		self.assertEqual(by_month["2026-10"], STATUS_PARTIAL)
+		self.assertEqual(by_month["2026-11"], STATUS_OK)
+
+	def test_cutover_on_the_first_is_a_normal_month(self):
+		rows = merge_reconciliation(
+			[spend("2026-11", 3000)], [booked("2026-11", 3000)], cutovers={"A": "2026-11-01"}
+		)
+		self.assertEqual(rows[0]["status"], STATUS_OK)
 
 
 if __name__ == "__main__":

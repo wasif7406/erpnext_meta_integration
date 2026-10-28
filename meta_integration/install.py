@@ -13,16 +13,15 @@ def before_install():
 
 def after_install():
 	print(
-		"\nMeta Integration installed.\n"
+		"\nMeta Integration installed (read-only: it never posts to the ledger).\n"
 		"Next steps:\n"
 		"  1. Create a Meta Account per company (Meta Integration > Meta Account).\n"
-		"     Rarely a company needs several (one ad account each).\n"
-		"  2. Map the Advertising Expense and Payable accounts, pick a Supplier,\n"
-		"     and set the exchange rate if the ad account currency differs.\n"
-		"  3. Paste the access token (system user / long-lived token) and Ad Account ID.\n"
-		"  4. Click 'Sync now' on the account, then tick the campaigns / ad sets /\n"
-		"     ads whose spend should be reported to ERPNext.\n"
-		"  5. Use 'Book expenses' to post the selected spend as expense + payable.\n"
+		"  2. Paste the access token (system user / long-lived) and the Ad Account ID.\n"
+		"  3. Set the Advertising Expense account (the one you book ad spend to) and\n"
+		"     'Data Starts On' — the date Meta spend becomes comparable to the books.\n"
+		"  4. Click 'Sync now'; spend lands in Meta Insight for analysis.\n"
+		"  5. Book the card/wallet charge yourself (manual JE) and check the month in\n"
+		"     the 'Meta Spend vs Ledger' report.\n"
 	)
 
 
