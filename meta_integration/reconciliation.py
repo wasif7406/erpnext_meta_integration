@@ -48,12 +48,20 @@ def merge_reconciliation(spend_rows, charge_rows, tolerance=DEFAULT_TOLERANCE):
 		target["drafts"] = int(target["drafts"]) + int(row.get("drafts") or 0)
 
 	rows = []
+	running = {}
 	for key in sorted(buckets):
 		row = buckets[key]
 		row["insight_spend"] = flt(row["insight_spend"], 2)
 		row["charged"] = flt(row["charged"], 2)
 		row["difference"] = flt(row["charged"] - row["insight_spend"], 2)
 		row["status"] = _status(row, tolerance)
+
+		# Meta bills on a cycle/threshold, not a calendar month, so the monthly
+		# difference is noisy by nature; the running difference is the real
+		# tie-out and must return to ~0 once billing catches up.
+		account = row["meta_account"] or ""
+		running[account] = flt(running.get(account, 0.0) + row["difference"], 2)
+		row["cumulative_difference"] = running[account]
 		rows.append(row)
 	return rows
 

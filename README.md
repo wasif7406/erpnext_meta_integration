@@ -145,8 +145,13 @@ entries, and a status pill.
 | Charge without spend | a charge in a month with no spend rows (e.g. VAT-only, or wrong account) |
 | Draft entries | a `Meta Billing` entry is still unposted |
 
-It reads `Meta Insight` and `Meta Billing` only — it never posts. Run it before closing a
-month; a red/orange row is the cue to check the card statement.
+It reads `Meta Insight` and `Meta Billing` only — it never posts.
+
+**Read the `Cumulative Difference` column, not the monthly `Difference`.** Meta bills on a
+threshold / billing cycle, so the last days of a month are normally charged in the next one:
+a single month showing `Spend not charged` is expected, and it flips to `OK` once that cycle
+clears. The cumulative figure (running total per account) must come back to ~0.00 — that is
+the signal that every rupee of spend was actually charged.
 
 Why not from Meta's API: for card-funded accounts Meta exposes **no** invoices, payment
 cycles or transactions (`adspaymentcycles`, `transactions`, `invoices` all return HTTP 400 —

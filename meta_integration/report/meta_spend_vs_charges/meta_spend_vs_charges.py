@@ -36,6 +36,12 @@ def get_columns():
 		},
 		{"label": _("Charges Posted"), "fieldname": "charged", "fieldtype": "Currency", "width": 140},
 		{"label": _("Difference"), "fieldname": "difference", "fieldtype": "Currency", "width": 130},
+		{
+			"label": _("Cumulative Difference"),
+			"fieldname": "cumulative_difference",
+			"fieldtype": "Currency",
+			"width": 170,
+		},
 		{"label": _("Draft Entries"), "fieldname": "drafts", "fieldtype": "Int", "width": 110},
 		{"label": _("Status"), "fieldname": "status", "fieldtype": "Data", "width": 150},
 	]

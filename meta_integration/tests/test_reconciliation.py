@@ -81,6 +81,34 @@ class TestMergeReconciliation(unittest.TestCase):
 		self.assertEqual(len(rows), 2)
 		self.assertEqual([r["status"] for r in rows], [STATUS_OK, STATUS_MISSING_CHARGE])
 
+	def test_cumulative_difference_offsets_monthly_noise(self):
+		# October under-charged by 1,000 because billing closed after month end,
+		# November catches it up: the running difference returns to zero.
+		rows = merge_reconciliation(
+			[
+				{"month": "2026-10", "meta_account": "A", "spend": 5000},
+				{"month": "2026-11", "meta_account": "A", "spend": 3000},
+			],
+			[
+				{"month": "2026-10", "meta_account": "A", "charged": 4000},
+				{"month": "2026-11", "meta_account": "A", "charged": 4000},
+			],
+		)
+		self.assertEqual([r["difference"] for r in rows], [-1000, 1000])
+		self.assertEqual([r["cumulative_difference"] for r in rows], [-1000, 0])
+
+	def test_cumulative_is_kept_per_account(self):
+		rows = merge_reconciliation(
+			[
+				{"month": "2026-10", "meta_account": "A", "spend": 1000},
+				{"month": "2026-10", "meta_account": "B", "spend": 1000},
+			],
+			[{"month": "2026-10", "meta_account": "A", "charged": 1000}],
+		)
+		by_account = {r["meta_account"]: r["cumulative_difference"] for r in rows}
+		self.assertEqual(by_account["A"], 0)
+		self.assertEqual(by_account["B"], -1000)
+
 	def test_rows_are_sorted_by_month(self):
 		rows = merge_reconciliation(
 			[
