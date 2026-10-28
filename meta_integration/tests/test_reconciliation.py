@@ -86,6 +86,17 @@ class TestMergeReconciliation(unittest.TestCase):
 		self.assertEqual(by_month["2026-10"], STATUS_PARTIAL)
 		self.assertEqual(by_month["2026-11"], STATUS_OK)
 
+	def test_cutover_month_still_flags_a_real_gap(self):
+		# Both sides are clipped to the cutover date, so a difference in that month
+		# is a genuine missing booking and must not hide behind "Partial month".
+		rows = merge_reconciliation(
+			[spend("2026-10", 52203.93)],
+			[],
+			cutovers={"A": "2026-10-21"},
+		)
+		self.assertEqual(rows[0]["status"], STATUS_NOT_BOOKED)
+		self.assertEqual(rows[0]["difference"], -52203.93)
+
 	def test_cutover_on_the_first_is_a_normal_month(self):
 		rows = merge_reconciliation(
 			[spend("2026-11", 3000)], [booked("2026-11", 3000)], cutovers={"A": "2026-11-01"}

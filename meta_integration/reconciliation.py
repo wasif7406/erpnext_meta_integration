@@ -60,8 +60,11 @@ def merge_reconciliation(spend_rows, ledger_rows, tolerance=DEFAULT_TOLERANCE, c
 		if cutover:
 			cutover = str(cutover)[:10]
 			if row["month"] == cutover[:7] and cutover[8:10] != "01":
-				# The books only cover part of this month; comparing it is noise.
-				row["status"] = STATUS_PARTIAL
+				# Only label the cutover month when everything already ties: a real
+				# gap must stay visible (both sides are clipped to the same date, so
+				# the comparison is valid even though the month is short).
+				if row["status"] == STATUS_OK:
+					row["status"] = STATUS_PARTIAL
 
 		account = row["meta_account"] or ""
 		running[account] = flt(running.get(account, 0.0) + row["difference"], 2)
