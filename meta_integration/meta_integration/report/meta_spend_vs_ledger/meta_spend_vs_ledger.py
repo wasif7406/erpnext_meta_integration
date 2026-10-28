@@ -21,15 +21,18 @@ def execute(filters=None):
 		a.name: str(a.expense_start_date)[:10] for a in accounts if a.get("expense_start_date")
 	}
 
+	# Both sides are clipped to the account's cutover date, so the month the cutover
+	# falls in compares like for like instead of full-month spend against a
+	# part-month ledger.
 	spend = _spend_rows(filters, from_date, to_date, rates, cutovers)
-	booked = _ledger_rows(filters, from_date, to_date)
+	booked = _ledger_rows(filters, from_date, to_date, cutovers)
 	rows = merge_reconciliation(spend, booked, cutovers=cutovers)
 
 	if not rows:
 		frappe.msgprint(
 			_(
 				"No spend and no ledger entries in this period. Check the dates, or set "
-				"the account's Expense Start Date to when Meta data begins."
+				"the account's 'Data Starts On' to when the Meta spend begins."
 			),
 			indicator="orange",
 			alert=True,
@@ -47,18 +50,8 @@ def get_columns():
 			"options": "Meta Account",
 			"width": 170,
 		},
-		{
-			"label": _("Meta Spend"),
-			"fieldname": "insight_spend",
-			"fieldtype": "Currency",
-			"width": 140,
-		},
-		{
-			"label": _("Booked in Ledger"),
-			"fieldname": "booked",
-			"fieldtype": "Currency",
-			"width": 150,
-		},
+		{"label": _("Meta Spend"), "fieldname": "insight_spend", "fieldtype": "Currency", "width": 140},
+		{"label": _("Booked in Ledger"), "fieldname": "booked", "fieldtype": "Currency", "width": 150},
 		{"label": _("Difference"), "fieldname": "difference", "fieldtype": "Currency", "width": 130},
 		{
 			"label": _("Cumulative Difference"),
@@ -80,7 +73,14 @@ def _accounts(filters):
 	return frappe.get_all(
 		"Meta Account",
 		filters=conditions,
-		fields=["name", "company", "currency", "exchange_rate", "expense_account", "expense_start_date"],
+		fields=[
+			"name",
+			"company",
+			"currency",
+			"exchange_rate",
+			"expense_account",
+			"expense_start_date",
+		],
 		limit=200,
 	)
 
@@ -95,12 +95,9 @@ def _spend_rows(filters, from_date, to_date, rates, cutovers):
 
 	rows = frappe.db.sql(
 		f"""
-		select date_format(date, '%%Y-%%m') as month,
-		       meta_account,
-		       sum(spend) as spend
+		select date, meta_account, spend
 		from `tabMeta Insight`
 		where {where}
-		group by month, meta_account
 		""",
 		{
 			"from_date": from_date,
@@ -113,21 +110,21 @@ def _spend_rows(filters, from_date, to_date, rates, cutovers):
 
 	out = []
 	for row in rows:
+		day = str(row.date)[:10]
 		cutover = cutovers.get(row.meta_account)
-		if cutover and str(row.month) < str(cutover)[:7]:
-			continue  # months the books already cover elsewhere
-		rate = rates.get(row.meta_account, 1.0)
+		if cutover and day < cutover:
+			continue
 		out.append(
 			{
-				"month": row.month,
+				"month": day[:7],
 				"meta_account": row.meta_account,
-				"spend": flt(row.spend) * rate,
+				"spend": flt(row.spend) * rates.get(row.meta_account, 1.0),
 			}
 		)
 	return out
 
 
-def _ledger_rows(filters, from_date, to_date):
+def _ledger_rows(filters, from_date, to_date, cutovers):
 	"""Anything that hit the mapped advertising expense account counts as booked."""
 	conditions = [
 		"gl.is_cancelled = 0",
@@ -141,16 +138,14 @@ def _ledger_rows(filters, from_date, to_date):
 		conditions.append("acc.company = %(company)s")
 	where = " and ".join(conditions)
 
-	return frappe.db.sql(
+	rows = frappe.db.sql(
 		f"""
-		select date_format(gl.posting_date, '%%Y-%%m') as month,
-		       acc.name as meta_account,
-		       sum(gl.debit - gl.credit) as booked
+		select gl.posting_date, acc.name as meta_account,
+		       (gl.debit - gl.credit) as amount
 		from `tabGL Entry` gl
 		join `tabMeta Account` acc
 		  on acc.expense_account = gl.account and acc.company = gl.company
 		where {where}
-		group by month, acc.name
 		""",
 		{
 			"from_date": from_date,
@@ -160,3 +155,18 @@ def _ledger_rows(filters, from_date, to_date):
 		},
 		as_dict=True,
 	)
+
+	out = []
+	for row in rows:
+		day = str(row.posting_date)[:10]
+		cutover = cutovers.get(row.meta_account)
+		if cutover and day < cutover:
+			continue
+		out.append(
+			{
+				"month": day[:7],
+				"meta_account": row.meta_account,
+				"booked": flt(row.amount),
+			}
+		)
+	return out

@@ -2,7 +2,7 @@
 
 # Bumped whenever we need to prove which code a site is running; call
 # `meta_integration.api.health` after a deploy and compare.
-BUILD = "2026-10-29.5"
+BUILD = "2026-10-30.1"
 
 BASE_URL = "https://graph.facebook.com"
 
