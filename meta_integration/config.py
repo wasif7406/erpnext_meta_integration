@@ -95,6 +95,7 @@ class AccountConfig:
 		if self.expense_start_date:
 			self.expense_start_date = str(self.expense_start_date)[:10]
 		self.purchase_item = account.get("purchase_item") or None
+		self.default_paid_from = account.get("default_paid_from") or None
 		self.api_version = (account.get("api_version") or DEFAULT_API_VERSION).strip()
 		self.ad_account_id = (account.get("ad_account_id") or "").strip()
 
@@ -160,6 +161,7 @@ class AccountConfig:
 			"booking_mode": self.booking_mode,
 			"expense_start_date": self.expense_start_date,
 			"expense_recognition": self.expense_recognition,
+			"default_paid_from": self.default_paid_from,
 		}
 
 

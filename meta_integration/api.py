@@ -102,9 +102,11 @@ def record_billing(
 	reference=None,
 	period_from=None,
 	period_to=None,
+	payment_mode=None,
+	paid_from=None,
 	remarks=None,
 ):
-	"""Record one Meta card charge / invoice (billing recognition)."""
+	"""Record one Meta card / wallet charge (billing recognition)."""
 	frappe.only_for(WRITE_ROLES)
 	_get(account)
 	name = billing_module.record_billing(
@@ -116,16 +118,18 @@ def record_billing(
 		reference=reference,
 		period_from=period_from,
 		period_to=period_to,
+		payment_mode=payment_mode,
+		paid_from=paid_from,
 		remarks=remarks,
 	)
 	return {"billing": name}
 
 
 @frappe.whitelist()
-def post_billing_purchase_invoice(billing):
-	"""Create + submit the Purchase Invoice for a Meta Billing entry."""
+def post_billing(billing):
+	"""Post a Meta Billing entry: Journal Entry (already paid) or Purchase Invoice (credit)."""
 	frappe.only_for(WRITE_ROLES)
-	return billing_module.post_purchase_invoice(billing)
+	return billing_module.post_billing(billing)
 
 
 @frappe.whitelist()

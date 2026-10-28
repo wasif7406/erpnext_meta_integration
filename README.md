@@ -9,10 +9,14 @@ Meta ad account ──sync──> Meta Campaign / Ad Set / Ad   cached, browsabl
                                                           │
                               ANALYTICS (no GL impact) ───┘  ROAS, campaign performance
 
-Card / statement charge ──> Meta Billing ──> Purchase Invoice
+Card / statement charge ──> Meta Billing ──> Journal Entry        "already paid" (default)
                                               Dr Advertising Expense
-                                              Cr Creditors (Supplier = Facebook)
-                                            └─> Payment Entry (bank / wallet feed)
+                                              Cr card / wallet / owner account
+
+                                         └─> Purchase Invoice      "on credit"
+                                              Dr Advertising Expense
+                                              Cr Creditors (Facebook)
+                                            └─> Payment Entry (only if credit was given)
 ```
 
 Two recognition modes (`Meta Account.expense_recognition`):
@@ -115,12 +119,18 @@ because rows are ad-level each ad-day is still counted once.
 ## 5. Recording a charge (billing mode)
 
 **Record billing charge** on the account → date, amount (as charged), currency + exchange
-rate if the card is billed in another currency, the card/statement reference, and optionally
-the ad period it covers. That creates a `Meta Billing` entry; **Create Purchase Invoice**
-(on the entry) posts `Dr Advertising Expense / Cr Creditors` with `bill_no` = the reference.
+rate if the card is billed in another currency, the statement reference, and **Paid From**
+(the card / wallet / owner account the money actually left).
 
-Settle it with a normal **Payment Entry** when the bank/wallet statement clears
-(`Dr Creditors / Cr Bank`), using ERPNext's bank reconciliation against the statement line.
+Two shapes, chosen per entry:
+
+| Payment mode | Posting | Extra work |
+|---|---|---|
+| **Already paid (direct)** — default | `Dr Advertising Expense / Cr Paid From` (Journal Entry) | none: the charge is settled by definition |
+| **On credit (Purchase Invoice)** | `Dr Advertising Expense / Cr Creditors` | a Payment Entry when the invoice is really paid |
+
+Card and wallet charges are already paid, so no Payment Entry is needed for them; AP is only
+used when Facebook or an agency actually grants terms.
 
 Why not from Meta's API: for card-funded accounts Meta exposes **no** invoices, payment
 cycles or transactions (`adspaymentcycles`, `transactions`, `invoices` all return HTTP 400 —

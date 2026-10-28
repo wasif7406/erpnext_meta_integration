@@ -135,6 +135,21 @@ function open_billing_dialog(frm) {
 				label: __("Reference (card / statement id)"),
 			},
 			{
+				fieldname: "payment_mode",
+				fieldtype: "Select",
+				label: __("Payment Mode"),
+				options: ["Already paid (direct)", "On credit (Purchase Invoice)"],
+				default: "Already paid (direct)",
+			},
+			{
+				fieldname: "paid_from",
+				fieldtype: "Link",
+				label: __("Paid From (card / wallet)"),
+				options: "Account",
+				default: frm.doc.default_paid_from || "",
+				description: __("Where the money actually left. Not needed for 'On credit'."),
+			},
+			{
 				fieldname: "period_from",
 				fieldtype: "Date",
 				label: __("Ad Period From"),
@@ -153,24 +168,31 @@ function open_billing_dialog(frm) {
 				callback: (r) => {
 					const name = (r.message || {}).billing;
 					if (!name) return;
-					frappe.confirm(__("Billing entry {0} created. Post the Purchase Invoice now?", [name]), () => {
-						frappe.call({
-							method: "meta_integration.api.post_billing_purchase_invoice",
-							args: { billing: name },
-							freeze: true,
-							freeze_message: __("Posting Purchase Invoice..."),
-							callback: (res) => {
-								const out = res.message || {};
-								if (out.purchase_invoice) {
-									frappe.show_alert({
-										message: __("Invoice {0} posted", [out.purchase_invoice]),
-										indicator: "green",
-									});
-								}
-								frappe.set_route("Form", "Meta Billing", name);
-							},
-						});
-					});
+					const on_credit = (values.payment_mode || "").startsWith("On credit");
+					frappe.confirm(
+						on_credit
+							? __("Billing entry {0} created. Post the Purchase Invoice now?", [name])
+							: __("Billing entry {0} created. Post the Journal Entry now?", [name]),
+						() => {
+							frappe.call({
+								method: "meta_integration.api.post_billing",
+								args: { billing: name },
+								freeze: true,
+								freeze_message: __("Posting…"),
+								callback: (res) => {
+									const out = res.message || {};
+									const voucher = out.journal_entry || out.purchase_invoice;
+									if (voucher) {
+										frappe.show_alert({
+											message: __("Posted {0}", [voucher]),
+											indicator: "green",
+										});
+									}
+									frappe.set_route("Form", "Meta Billing", name);
+								},
+							});
+						}
+					);
 					frm.reload_doc();
 				},
 			});

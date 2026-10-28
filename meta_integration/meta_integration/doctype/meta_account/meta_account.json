@@ -26,6 +26,7 @@
   "expense_start_date",
   "supplier",
   "purchase_item",
+  "default_paid_from",
   "column_break_money",
   "enable_sync",
   "enable_auto_booking",
@@ -162,6 +163,13 @@
    "options": "Item"
   },
   {
+   "fieldname": "default_paid_from",
+   "fieldtype": "Link",
+   "options": "Account",
+   "label": "Default Paid From",
+   "description": "Account the card/wallet charges are paid from (pre-fills every billing entry)."
+  },
+  {
    "fieldname": "column_break_money",
    "fieldtype": "Column Break"
   },
@@ -211,7 +219,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-29 01:30:00.000000",
+ "modified": "2026-10-29 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Meta Integration",
  "name": "Meta Account",
