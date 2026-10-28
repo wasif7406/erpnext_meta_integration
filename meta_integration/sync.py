@@ -47,7 +47,6 @@ def sync_account(account: str, days=None, until=None) -> dict:
 		"ads": 0,
 		"insights_new": 0,
 		"insights_updated": 0,
-		"insights_booked_skipped": 0,
 		"errors": [],
 	}
 
@@ -274,13 +273,13 @@ def _sync_insights(account, client, since, until, maps, result):
 		result["errors"].append(f"insights: {str(exc)[:150]}")
 		return
 
-	existing = {}
-	for row in frappe.get_all(
-		"Meta Insight",
-		filters={"meta_account": account.name, "date": ("between", [since, until])},
-		fields=["name", "expense_entry"],
-	):
-		existing[row.name] = row.expense_entry
+	existing = set(
+		frappe.get_all(
+			"Meta Insight",
+			filters={"meta_account": account.name, "date": ("between", [since, until])},
+			pluck="name",
+		)
+	)
 
 	for row in rows:
 		ad_id = str(row.get("ad_id") or "").strip()
@@ -308,13 +307,6 @@ def _sync_insights(account, client, since, until, maps, result):
 		}
 
 		if key in existing:
-			if existing[key]:
-				# Already reported: never restate a booked amount silently.
-				result["insights_booked_skipped"] += 1
-				frappe.db.set_value(
-					"Meta Insight", key, "last_synced_on", now_datetime(), update_modified=False
-				)
-				continue
 			frappe.db.set_value("Meta Insight", key, values, update_modified=False)
 			result["insights_updated"] += 1
 		else:
@@ -323,11 +315,11 @@ def _sync_insights(account, client, since, until, maps, result):
 				doc.update(values)
 				doc.flags.ignore_permissions = True
 				doc.insert(ignore_permissions=True)
-				existing[key] = None
+				existing.add(key)
 				result["insights_new"] += 1
 			except Exception:
 				# A concurrent run may have inserted the same ad-day first.
-				existing[key] = None
+				existing.add(key)
 				log_error(
 					"Meta insight insert failed",
 					f"{account.name} {key}\n{frappe.get_traceback()}",
@@ -351,8 +343,6 @@ def _finish_run(run, result):
 		f"ads {result.get('ads', 0)}, insights new {result.get('insights_new', 0)} / "
 		f"updated {result.get('insights_updated', 0)}"
 	)
-	if result.get("insights_booked_skipped"):
-		summary += f", booked rows kept as-is {result['insights_booked_skipped']}"
 	if result.get("currency"):
 		summary += f", currency {result['currency']}"
 	if result.get("errors"):
@@ -375,7 +365,6 @@ def _finish_run(run, result):
 			"ads": result.get("ads", 0),
 			"insights_new": result.get("insights_new", 0),
 			"insights_updated": result.get("insights_updated", 0),
-			"insights_skipped": result.get("insights_booked_skipped", 0),
 			"errors": len(result.get("errors") or []),
 			"summary": summary[:900],
 		},

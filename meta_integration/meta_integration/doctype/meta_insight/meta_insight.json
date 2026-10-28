@@ -2,7 +2,7 @@
  "actions": [],
  "autoname": "field:insight_key",
  "creation": "2026-10-27 10:00:00.000000",
- "description": "Daily spend per ad. Each row is booked at most once (expense_entry).",
+ "description": "Daily spend per ad (analytics only).",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -20,7 +20,6 @@
   "impressions",
   "clicks",
   "currency",
-  "expense_entry",
   "last_synced_on"
  ],
  "fields": [
@@ -110,15 +109,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "expense_entry",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Expense Entry",
-   "options": "Meta Expense Entry",
-   "read_only": 1
-  },
-  {
    "fieldname": "last_synced_on",
    "fieldtype": "Datetime",
    "label": "Last Synced On",
@@ -127,7 +117,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-27 10:00:00.000000",
+ "modified": "2026-10-30 09:00:00.000000",
  "modified_by": "Administrator",
  "module": "Meta Integration",
  "name": "Meta Insight",
