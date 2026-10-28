@@ -22,6 +22,7 @@ from .constants import (
 from .exceptions import MetaConfigError
 from .utils import (
 	base_amount,
+	booking_window,
 	chunked,
 	log_error,
 	money,
@@ -75,8 +76,11 @@ def unbooked_insights(account, from_date, to_date) -> list:
 	)
 
 
-def selected_insights(account, from_date, to_date) -> list:
-	rows = unbooked_insights(account, from_date, to_date)
+def selected_insights(account, from_date, to_date, start_date=None) -> list:
+	window = booking_window(from_date, to_date, start_date)
+	if not window:
+		return []
+	rows = unbooked_insights(account, *window)
 	ads, ad_sets, campaigns = selected_entities(account)
 	return select_rows(rows, ads, ad_sets, campaigns)
 
@@ -86,7 +90,8 @@ def selected_insights(account, from_date, to_date) -> list:
 # ---------------------------------------------------------------------------
 def preview(account, from_date, to_date) -> dict:
 	config = AccountConfig(account)
-	rows = selected_insights(account, from_date, to_date)
+	window = booking_window(from_date, to_date, config.expense_start_date)
+	rows = selected_insights(account, from_date, to_date, config.expense_start_date)
 	total = total_spend(rows)
 	existing = _existing_entry(account, from_date, to_date)
 
@@ -98,11 +103,13 @@ def preview(account, from_date, to_date) -> dict:
 		"currency": config.currency,
 		"exchange_rate": config.exchange_rate,
 		"company_currency": config.company_currency,
-		"unbooked_rows": len(unbooked_insights(account, from_date, to_date)),
+		"unbooked_rows": len(unbooked_insights(account, *(window or (from_date, to_date)))),
 		"selected_rows": len(rows),
 		"total": total,
 		"base_total": base_amount(total, config.exchange_rate),
 		"booking_mode": config.booking_mode,
+		"expense_start_date": config.expense_start_date,
+		"effective_from": window[0] if window else None,
 		"expense_account": config.expense_account,
 		"payable_account": config.payable_account,
 		"supplier": config.supplier,
@@ -146,7 +153,16 @@ def book_expenses(account, from_date, to_date, posting_date=None, dry_run=False)
 		)
 		return result
 
-	rows = selected_insights(account, from_date, to_date)
+	window = booking_window(from_date, to_date, config.expense_start_date)
+	if not window:
+		result.update(
+			{
+				"status": STATUS_SKIPPED,
+				"reason": f"period ends before the expense start date ({config.expense_start_date})",
+			}
+		)
+		return result
+	rows = selected_insights(account, from_date, to_date, config.expense_start_date)
 	total = total_spend(rows)
 	result["selected_rows"] = len(rows)
 	result["total"] = total
@@ -427,7 +443,8 @@ def release_entry(entry_name: str) -> dict:
 
 def open_period_summary(account, from_date, to_date) -> list:
 	"""Spend grouped by campaign, for the preview dialog."""
-	rows = selected_insights(account, from_date, to_date)
+	config = AccountConfig(account)
+	rows = selected_insights(account, from_date, to_date, config.expense_start_date)
 	grouped = {}
 	for row in rows:
 		key = row.get("campaign") or "-"

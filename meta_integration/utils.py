@@ -105,6 +105,22 @@ def select_rows(rows, selected_ads, selected_ad_sets, selected_campaigns):
 	]
 
 
+def booking_window(from_date, to_date, start_date=None):
+	"""Clip a requested period to the account's expense start date.
+
+	Anything before `start_date` is already in the ledger (booked manually or by
+	the previous system), so it must never be booked again. Returns None when the
+	whole period predates the cutover.
+	"""
+	start = str(from_date)[:10]
+	end = str(to_date)[:10]
+	if start_date and str(start_date)[:10] > start:
+		start = str(start_date)[:10]
+	if start > end:
+		return None
+	return start, end
+
+
 def total_spend(rows) -> float:
 	return money(sum(flt(row.get("spend")) for row in rows))
 

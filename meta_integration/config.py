@@ -82,6 +82,14 @@ class AccountConfig:
 		self.exchange_rate = flt(account.get("exchange_rate")) or 1.0
 		self.booking_mode = account.get("booking_mode") or BOOKING_JOURNAL_ENTRY
 		self.supplier = account.get("supplier") or None
+		# Nothing before this date may be booked: it is already in the ledger.
+		self.expense_start_date = (
+			account.get("expense_start_date")
+			or account.get("creation")
+			or None
+		)
+		if self.expense_start_date:
+			self.expense_start_date = str(self.expense_start_date)[:10]
 		self.purchase_item = account.get("purchase_item") or None
 		self.api_version = (account.get("api_version") or DEFAULT_API_VERSION).strip()
 		self.ad_account_id = (account.get("ad_account_id") or "").strip()
@@ -146,6 +154,7 @@ class AccountConfig:
 			"currency": self.currency,
 			"exchange_rate": self.exchange_rate,
 			"booking_mode": self.booking_mode,
+			"expense_start_date": self.expense_start_date,
 		}
 
 
