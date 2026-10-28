@@ -185,12 +185,8 @@ def _upsert_entity(account, kind, row, maps):
 				"campaign_id": identity,
 				"campaign_name": row.get("name"),
 				"objective": row.get("objective"),
-				"daily_budget": _to_float(row.get("daily_budget"))
-				if row.get("daily_budget")
-				else None,
-				"lifetime_budget": _to_float(row.get("lifetime_budget"))
-				if row.get("lifetime_budget")
-				else None,
+				"daily_budget": _to_float(row.get("daily_budget")),
+				"lifetime_budget": _to_float(row.get("lifetime_budget")),
 				"start_time": meta_datetime(row.get("start_time")),
 				"stop_time": meta_datetime(row.get("stop_time")),
 			}
@@ -203,12 +199,8 @@ def _upsert_entity(account, kind, row, maps):
 				"ad_set_id": identity,
 				"ad_set_name": row.get("name"),
 				"campaign": _ensure_stub("campaigns", account, campaign, None, maps),
-				"daily_budget": _to_float(row.get("daily_budget"))
-				if row.get("daily_budget")
-				else None,
-				"lifetime_budget": _to_float(row.get("lifetime_budget"))
-				if row.get("lifetime_budget")
-				else None,
+				"daily_budget": _to_float(row.get("daily_budget")),
+				"lifetime_budget": _to_float(row.get("lifetime_budget")),
 				"optimization_goal": row.get("optimization_goal"),
 				"billing_event": row.get("billing_event"),
 				"start_time": meta_datetime(row.get("start_time")),
@@ -250,6 +242,10 @@ def _ensure_stub(kind, account, identity, label, maps):
 
 	doctype, id_field = _entity_doctype(kind)
 	if frappe.db.exists(doctype, identity):
+		label_field = {"campaigns": "campaign_name", "ad_sets": "ad_set_name", "ads": "ad_name"}[kind]
+		current = frappe.db.get_value(doctype, identity, label_field)
+		if label and (not current or current == identity):
+			frappe.db.set_value(doctype, identity, label_field, label, update_modified=False)
 		return identity
 
 	values = {
